@@ -42,10 +42,13 @@ for (k in c(1,2)){
 }
 ## ========================================================================================== ##
 ## Combine matrices from both days
-mturk_data1 = read.csv(sprintf("%s/mturk_day%s_data.csv",working_dir,1), row.names = 1)
-mturk_data2 = read.csv(sprintf("%s/mturk_day%s_data.csv",working_dir,2), row.names = 1)
+working_dir = "mturk_data"
+mturk_data1 = read.csv(sprintf("%s/mturk_day%s_pval_mat.csv",working_dir,1), row.names = 1)
+mturk_data2 = read.csv(sprintf("%s/mturk_day%s_pval_mat.csv",working_dir,2), row.names = 1)
 cor.test(mturk_data1[upper.tri(mturk_data1)],mturk_data2[upper.tri(mturk_data2)])
 beh_data = (mturk_data1 + mturk_data2)/2
+
+write.csv(beh_data, file = "behavioral_data_matrix.csv", quote = TRUE, eol = "\n", na = "NA", row.names = TRUE)
 
 # sort the columns and rows of the matrix into the correct order
 base_concepts = clean_names(c(emotion_concepts,taste_concepts,color_concepts))
