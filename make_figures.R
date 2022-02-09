@@ -35,6 +35,8 @@ beh_data = (mturk_data1 + mturk_data2)/2
 
 # Read in behavioral p-values
 df = read.csv(sprintf("%s/behavioral_data_table.csv",working_dir), row.names = 1) #read in if needed
+df$group = factor(df$group, levels=groups)
+df$group_label = factor(df$group_label, levels=group_labels)
 ## ========================================================================================== ##
 ## Plot beh data, For Figure 1d
 ## Figure 1d =====
@@ -49,7 +51,7 @@ beh_plot = ggplot(df, aes(group_label, edge, fill = group_label)) + scale_fill_m
   ggtitle("Semantic Similarity by Concept Category") + theme(plot.title = element_text(hjust = 0.5, color="black", size=20, face="bold.italic")) +
   theme(axis.text.x = element_text(size = 8,hjust=NULL, face="bold")) +
   xlab("Concept Set") + theme(axis.title.x = element_text(hjust = 0.5, color="black", size=14, face="bold")) +
-  ylab("Average P-value") + theme(axis.title.y = element_text(hjust = 0.5, color="black", size=14, face="bold")) +
+  ylab("Average Similarity Value") + theme(axis.title.y = element_text(hjust = 0.5, color="black", size=14, face="bold")) +
   labs(fill = "Concept Set")
 plot(beh_plot)
 ggsave(sprintf("%s/Behavioral_Data.pdf",working_dir),dpi=300)
@@ -65,7 +67,7 @@ beh_plot = ggplot(test_frame, aes(group_label, edge, fill = group_label)) + scal
   ggtitle("Semantic Similarity by Concept Category") + theme(plot.title = element_text(hjust = 0.5, color="black", size=20, face="bold.italic")) +
   theme(axis.text.x = element_text(color="black",size = 12,hjust=NULL, face="bold")) +
   xlab("Concept Set") + theme(axis.title.x = element_blank()) +
-  ylab("Average P-value") + theme(axis.title.y = element_text(hjust = 0.5, color="black", size=14, face="bold")) +
+  ylab("Average Similarity Value") + theme(axis.title.y = element_text(hjust = 0.5, color="black", size=14, face="bold")) +
   labs(fill = "Concept Set")
 plot(beh_plot)
 ggsave(sprintf("%s/Beh_TE_vs_CE.pdf",working_dir),dpi=300)
