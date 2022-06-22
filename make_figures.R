@@ -1,5 +1,5 @@
 #source all the good stuff here
-# source("~/Documents/OneDrive - National Institutes of Health/Documents/Scripts/source_me.R")
+setwd("/Users/averyja/Documents/GitHub/Taste-Words")
 source("source_me.R")
 
 ## ========================================================================================== ##
