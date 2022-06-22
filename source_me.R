@@ -48,10 +48,7 @@ clean_names <- function(x) {
 }
 ## ========================================================================================== ##
 ## Function to change the range of an input vector or matrix to between 0..1
-range <- function(x, ...){(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
-## ========================================================================================== ##
-## Transform edge strengths to normal distribution, between 0 and 1, set 0's to NA
-trans_range <- function(x){range(ifelse(x > 0,log(x),NA), na.rm = TRUE)}
+rescale <- function(x, ...){(x - min(x, ...)) / (max(x, ...) - min(x, ...))}
 ## ========================================================================================== ##
 ## Function for permutation tests for linear models
 perm.lm.test <- function(uni_glm,iter) {

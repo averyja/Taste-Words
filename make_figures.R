@@ -1,80 +1,155 @@
 #source all the good stuff here
+# source("~/Documents/OneDrive - National Institutes of Health/Documents/Scripts/source_me.R")
 source("source_me.R")
 
 ## ========================================================================================== ##
 ## Behavioral Data Figures ====
 working_dir = "behavioral_data"
 ## ========================================================================================== ##
-## First import database stats to create Concreteness, Valence, and Arousal Comparisons
-## Figure S1 =====
-con_frame = read.csv(sprintf("%s/concept_database_stats.csv",working_dir), row.names = 1)
+## Heatmaps for Figure 1
+## Combine matrices from both days
+mturk_data1 = read.csv(sprintf("%s/mturk_day%s_pval_mat.csv",working_dir,1), row.names = 1)
+mturk_data2 = read.csv(sprintf("%s/mturk_day%s_pval_mat.csv",working_dir,2), row.names = 1)
+beh_data = (mturk_data1 + mturk_data2)/2
 
-values = c("valence","arousal","concreteness")
-for(i in values){
-  bar_plot = ggplot(con_frame, aes_string("group", i, fill = "group")) + scale_fill_manual(values=r_colors[1:3]) +
-    stat_summary(geom = "bar", fun = mean, position = "dodge", colour="black") + 
-    stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width = 0.2)+
-    geom_hline(yintercept=0) +
-    theme(strip.text.x = element_text(color="black", size=14, face="bold")) +
-    geom_signif(comparisons=list(c("Taste", "Emotion"),c("Color", "Emotion"),c("Color", "Taste")), 
-                test = "t.test", map_signif_level = TRUE, y_position = c(.8, .9, 1.0), tip_length = 0, vjust=0.2) +
-    ggtitle(sprintf("%s by Concept Category",str_to_sentence(i))) + theme(plot.title = element_text(hjust = 0.5, color="black", size=20, face="bold.italic")) +
-    theme(axis.text.x = element_text(color="black",size = 12,hjust=NULL, face="bold")) +
-    xlab("Concept Set") + theme(axis.title.x = element_blank()) +
-    ylab(sprintf("Average %s - scaled",str_to_sentence(i))) + theme(axis.title.y = element_text(hjust = 0.5, color="black", size=14, face="bold")) +
-    theme(legend.position = "none")
-  plot(bar_plot)
-  ggsave(sprintf("%s/%s_comparisons.pdf",working_dir,str_to_sentence(i)),dpi=300)
-}
+display.brewer.pal(9,"YlOrRd")
+mypalette=brewer.pal(9,"YlOrRd")
+## ========================================================================================== ##
+## Heatmap using ggplot
+
+df=melt(as.matrix(beh_data[clean_names(order),clean_names(order)]), na.rm = T)
+
+concept_frame = data.frame(clean_names(order),c(rep("Emotion",24),rep("Taste",14),rep("Color",13)))
+names(concept_frame) = c("concept","group_label")
+concept_frame$color = c(rep(r_adj_colors[1],24),rep(r_adj_colors[2],14),rep(r_adj_colors[3],13))
+
+ggplot(df,aes(x=Var1,y=Var2,fill=value)) +
+  geom_tile(color="black") + scale_fill_gradientn(colors = brewer.pal(9,"YlOrRd"))+
+  theme(axis.title.y = element_blank()) + 
+  theme(axis.text.y = element_text(size=10, face="bold", color = concept_frame$color)) + 
+  theme(axis.title.x = element_blank()) + theme(axis.text.x = element_blank())+
+  labs(title="Semantic Similarity Matrix") + theme(plot.title = element_text(size=32, face="bold", hjust = 0.5)) + 
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=2), panel.spacing.x = unit(0,"line")) +
+  theme(legend.text = element_text(face="bold")) + 
+  theme(legend.title = element_blank()) + 
+  labs(fill = "Connection\nStrength") + theme(legend.position = "none")
+ggsave(sprintf("%s/Semantic Similarity Matrix ggplot.png",working_dir),width=8,height=8,dpi=300)
 
 ## ========================================================================================== ##
-## Combine matrices from both days
-mturk_data1 = read.csv(sprintf("%s/mturk_day%s_data.csv",working_dir,1), row.names = 1)
-mturk_data2 = read.csv(sprintf("%s/mturk_day%s_data.csv",working_dir,2), row.names = 1)
-beh_data = (mturk_data1 + mturk_data2)/2
+## ggplot version of 1C heatmaps
+temo_heatmap=heatmap(as.matrix(beh_data[clean_names(taste_concepts),clean_names(emotion_concepts)]), col=mypalette)
+temo_rows = clean_names(taste_concepts)[temo_heatmap$rowInd]
+temo_cols = clean_names(emotion_concepts)[temo_heatmap$colInd]
+temo_frame=melt(as.matrix(beh_data[temo_rows,temo_cols]), na.rm = T)
+
+ggplot(temo_frame,aes(x=Var1,y=Var2,fill=value)) +
+  geom_tile(color="black") + scale_fill_gradientn(colors = brewer.pal(9,"YlOrRd"))+
+  theme(axis.title.y = element_blank()) + theme(axis.title.x = element_blank()) + 
+  theme(axis.text.y = element_text(size=10, face="bold", color = r_adj_colors[1])) + 
+  theme(axis.text.x = element_text(size=10, face="bold", color = r_adj_colors[2]))+
+  labs(title="Taste-Emotion") + theme(plot.title = element_text(size=32, face="bold", hjust = 0.5)) + 
+  # theme(panel.border = element_rect(colour = "black", fill=NA, size=2), panel.spacing.x = unit(0,"line")) +
+  theme(legend.text = element_text(face="bold")) + 
+  theme(legend.title = element_blank()) + 
+  labs(fill = "Connection\nStrength") + theme(legend.position = "none")
+ggsave(sprintf("%s/taste-emotion heatmap ggplot.png",working_dir),width=10,height=5,dpi=300)
+
+## ========================================================================================== ##
+cemo_heatmap=heatmap(as.matrix(beh_data[clean_names(color_concepts),clean_names(emotion_concepts)]), col=mypalette)
+cemo_rows = clean_names(color_concepts)[cemo_heatmap$rowInd]
+cemo_cols = clean_names(emotion_concepts)[cemo_heatmap$colInd]
+cemo_frame=melt(as.matrix(beh_data[cemo_rows,cemo_cols]), na.rm = T)
+
+ggplot(cemo_frame,aes(x=Var1,y=Var2,fill=value)) +
+  geom_tile(color="black") + scale_fill_gradientn(colors = brewer.pal(9,"YlOrRd"))+
+  theme(axis.title.y = element_blank()) + theme(axis.title.x = element_blank()) + 
+  theme(axis.text.y = element_text(size=10, face="bold", color = r_adj_colors[1])) + 
+  theme(axis.text.x = element_text(size=10, face="bold", color = r_adj_colors[3]))+
+  labs(title="Color-Emotion") + theme(plot.title = element_text(size=32, face="bold", hjust = 0.5)) + 
+  # theme(panel.border = element_rect(colour = "black", fill=NA, size=2), panel.spacing.x = unit(0,"line")) +
+  theme(legend.text = element_text(face="bold")) + 
+  theme(legend.title = element_blank()) + 
+  labs(fill = "Connection\nStrength") + theme(legend.position = "none")
+ggsave(sprintf("%s/color-emotion heatmap ggplot.png",working_dir),width=10,height=5,dpi=300)
+
+## ========================================================================================== ##
 
 # Read in behavioral p-values
 df = read.csv(sprintf("%s/behavioral_data_table.csv",working_dir), row.names = 1) #read in if needed
 df$group = factor(df$group, levels=groups)
 df$group_label = factor(df$group_label, levels=group_labels)
-## ========================================================================================== ##
-## Plot beh data, For Figure 1d
-## Figure 1d =====
-start_height=0.8; bar_size = 0; text_size = 4; ypos = 1
-
-beh_plot = ggplot(df, aes(group_label, edge, fill = group_label)) + scale_fill_manual(values=r_colors[1:6]) +
-  stat_summary(geom = "bar", fun = mean, position = "dodge", colour="black") + 
-  stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width = 0.2)+
-  geom_hline(yintercept=0) +
-  theme(strip.text.x = element_text(color="black", size=14, face="bold")) +
-  geom_signif(comparisons=list(c("Taste-Emotion", "Color-Emotion"),c("Color", "Emotion")), test = "t.test", map_signif_level = TRUE, y_position = c(0.30, 0.75), tip_length = 0, vjust=0.2) +
-  ggtitle("Semantic Similarity by Concept Category") + theme(plot.title = element_text(hjust = 0.5, color="black", size=20, face="bold.italic")) +
-  theme(axis.text.x = element_text(size = 8,hjust=NULL, face="bold")) +
-  xlab("Concept Set") + theme(axis.title.x = element_text(hjust = 0.5, color="black", size=14, face="bold")) +
-  ylab("Average Similarity Value") + theme(axis.title.y = element_text(hjust = 0.5, color="black", size=14, face="bold")) +
-  labs(fill = "Concept Set")
-plot(beh_plot)
-ggsave(sprintf("%s/Behavioral_Data.pdf",working_dir),dpi=300)
 
 test_frame = filter(df,group %in% groups[c(4,5)])
 
-beh_plot = ggplot(test_frame, aes(group_label, edge, fill = group_label)) + scale_fill_manual(values=r_colors[4:5]) +
-  stat_summary(geom = "bar", fun = mean, position = "dodge", colour="black") + 
-  stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width = 0.2)+
+## ========================================================================================== ##
+## Create Box-Violin plot for Figure 2c
+start_height=0.8; bar_size = 0; text_size = 4; ypos = 1
+
+ggplot(test_frame, aes(group_label, edge, fill = group_label)) + 
+  scale_fill_manual(values=r_colors[4:5]) + 
+  geom_violin() + geom_boxplot(fill = "white", alpha = 0.75)+
+  # stat_summary(geom = "bar", fun = mean, position = "dodge", colour="black") + 
+  # stat_summary(geom = "errorbar", fun.data = mean_se, position = "dodge", width = 0.2)+
   geom_hline(yintercept=0) +
+  # geom_jitter()+
   theme(strip.text.x = element_text(color="black", size=14, face="bold")) +
-  geom_signif(comparisons=list(c("Taste-Emotion", "Color-Emotion")), test = "t.test", map_signif_level = TRUE, y_position = c(0.30), tip_length = 0, vjust=0.2) +
-  ggtitle("Semantic Similarity by Concept Category") + theme(plot.title = element_text(hjust = 0.5, color="black", size=20, face="bold.italic")) +
+  geom_signif(comparisons=list(c("Taste-Emotion", "Color-Emotion")), test = "t.test", map_signif_level = TRUE, 
+              y = 0.80, tip_length = 0, vjust=0.2) +
+  ggtitle("Semantic Similarity by Concept Category") + theme(plot.title = element_text(hjust = 0.5, color="black", size=12, face="bold.italic")) +
   theme(axis.text.x = element_text(color="black",size = 12,hjust=NULL, face="bold")) +
   xlab("Concept Set") + theme(axis.title.x = element_blank()) +
-  ylab("Average Similarity Value") + theme(axis.title.y = element_text(hjust = 0.5, color="black", size=14, face="bold")) +
-  labs(fill = "Concept Set")
-plot(beh_plot)
-ggsave(sprintf("%s/Beh_TE_vs_CE.pdf",working_dir),dpi=300)
+  ylab("Average Similarity Value") + theme(axis.title.y = element_text(hjust = 0.5, color="black", size=12, face="bold")) +
+  labs(fill = "Concept Set")+ theme(legend.position="none")
+ggsave(sprintf("%s/Beh_TE_vs_CE_violin_box.png",working_dir),width=4, height = 4.5,dpi=300)
+
+## ========================================================================================== ##
+## Behavioral Data Figures ====
+working_dir = "behavioral_data"
+val_order = c(emotion_concepts,taste_concepts[1:12],color_concepts)
+
+data_table = read.csv(sprintf("behavioral_data/behavioral_data_table.csv", row.names = 1))
+data_table$row = factor(data_table$row, levels = val_order)
+data_table$col = factor(data_table$col, levels = val_order)
+# create half-mat for new Figure 3
+
+ggplot(data_table,aes(x=row,y=col,fill=edge)) +
+  geom_tile(color="black") + scale_fill_gradientn(colors = brewer.pal(9,"YlOrRd"))+
+  theme(axis.title.y = element_blank()) + 
+  theme(axis.text.y = element_blank()) + 
+  theme(axis.title.x = element_blank()) + theme(axis.text.x = element_blank())+
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1), panel.spacing.x = unit(0,"line")) +
+  theme(legend.text = element_text(face="bold")) + 
+  theme(legend.title = element_blank()) + 
+  labs(fill = "Connection\nStrength") + theme(legend.position = "none")
+ggsave(sprintf("%s/half mat ggplot.png",working_dir),width=6,height=6,dpi=300)
+
+# create valence half-mat for new Figure 3
+ggplot(data_table,aes(x=row,y=col,fill=valence)) +
+  geom_tile(color="black") + scale_fill_gradientn(colors = brewer.pal(9,"YlOrRd"))+
+  theme(axis.title.y = element_blank()) + 
+  theme(axis.text.y = element_blank()) + 
+  theme(axis.title.x = element_blank()) + theme(axis.text.x = element_blank())+
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1), panel.spacing.x = unit(0,"line")) +
+  theme(legend.text = element_text(face="bold")) + 
+  theme(legend.title = element_blank()) + 
+  labs(fill = "Connection\nStrength") + theme(legend.position = "none")
+ggsave(sprintf("%s/valence half mat ggplot.png",working_dir),width=6,height=6,dpi=300)
+
+# create arousal half-mat for new Figure 3
+ggplot(data_table,aes(x=row,y=col,fill=arousal)) +
+  geom_tile(color="black") + scale_fill_gradientn(colors = brewer.pal(9,"YlOrRd"))+
+  theme(axis.title.y = element_blank()) + 
+  theme(axis.text.y = element_blank()) + 
+  theme(axis.title.x = element_blank()) + theme(axis.text.x = element_blank())+
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1), panel.spacing.x = unit(0,"line")) +
+  theme(legend.text = element_text(face="bold")) + 
+  theme(legend.title = element_blank()) + 
+  labs(fill = "Connection\nStrength") + theme(legend.position = "none")
+ggsave(sprintf("%s/arousal half mat ggplot.png",working_dir),width=6,height=6,dpi=300)
 
 ## ========================================================================================== ##
 ## Create Scatterplots for each concept group
-## Figure 2b,c =====
+## Figure 3b,c =====
 for (i in 1:6){
   group = groups[i]; set = strsplit(group,"_")[[1]]
   group_label = group_labels[i]
@@ -112,5 +187,5 @@ for (i in 1:6){
     theme(legend.position="none",plot.margin=unit(c(0,0,0,0),"points"))
   
   plot(scatterplot)
-  ggsave(sprintf("%s/%s_concepts_beh_data_scatterplot.pdf",working_dir,group),dpi=300)
+  ggsave(sprintf("%s/%s_concepts_beh_data_scatterplot.pdf",working_dir,group),width=6,height=6,dpi=300)
 }
